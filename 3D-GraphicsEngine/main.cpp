@@ -10,6 +10,10 @@ struct vec3d
 struct triangle
 {
     vec3d p[3];
+
+    int red;
+    int blue;
+    int green;
 };
 
 struct mesh
@@ -161,9 +165,23 @@ public:
                 normal.y * (triTranslated.p[0].y - vCamera.y) +
                 normal.z * (triTranslated.p[0].z - vCamera.z) < 0.0f)
             {
+                
+                vec3d light_direction = { 0.0f, 0.0f, -1.0f };
+                float l = sqrtf(light_direction.x * light_direction.x + light_direction.y * light_direction.y + light_direction.z * light_direction.z);
+                light_direction.x /= l; light_direction.y /= l; light_direction.z /= l;
+
+                float dp = normal.x * light_direction.x + normal.y * light_direction.y + normal.z * light_direction.z;
+
+                triTranslated.red = dp * 255;
+                triTranslated.blue = dp * 255;
+                triTranslated.green = dp * 255;
+
                 MultiplyMatrixVector(triTranslated.p[0], triProjected.p[0], matProj);
                 MultiplyMatrixVector(triTranslated.p[1], triProjected.p[1], matProj);
                 MultiplyMatrixVector(triTranslated.p[2], triProjected.p[2], matProj);
+                triProjected.red = triTranslated.red;
+                triProjected.blue = triTranslated.blue;
+                triProjected.green = triTranslated.green;
 
                 // Scale into view
                 triProjected.p[0].x += 1.0f; triProjected.p[0].y += 1.0f;
@@ -177,6 +195,16 @@ public:
                 triProjected.p[2].x *= 0.5f * (float)ScreenWidth();
                 triProjected.p[2].y *= 0.5f * (float)ScreenHeight();
 
+                olc::Pixel p;
+                p.r = triProjected.red;
+                p.g = triProjected.green;
+                p.b = triProjected.blue;
+                p.a = 255;
+
+                FillTriangle(triProjected.p[0].x, triProjected.p[0].y,
+                    triProjected.p[1].x, triProjected.p[1].y,
+                    triProjected.p[2].x, triProjected.p[2].y,
+                    p);
 
                 DrawTriangle(triProjected.p[0].x, triProjected.p[0].y,
                     triProjected.p[1].x, triProjected.p[1].y,
